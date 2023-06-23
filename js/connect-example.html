@@ -1,0 +1,140 @@
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.7.0.slim.min.js" integrity="sha256-tG5mcZUtJsZvyKAxYLVXrmjKBVLd6VpVccqz/r4ypFE=" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <form id="demoForm" action="/my/backend" method="POST">
+      <div id="base-errors"></div>
+      <div class="form-input">
+        <label for="first_name-input">First name</label>
+        <input id="first_name-input" type="text" />
+        <div id="first_name-error"></div>
+      </div>
+      <div class="form-input">
+        <label for="last_name-input">Last name</label>
+        <input id="last_name-input" type="text" />
+        <div id="last_name-error"></div>
+      </div>
+      <div class="form-input">
+        <label for="email-input">Email</label>
+        <input id="email-input" type="text" />
+        <div id="email-error"></div>
+      </div>
+      <div class="form-input">
+        <label for="home_phone-input">Phone</label>
+        <input id="home_phone-input" type="text" />
+        <div id="home_phone-error"></div>
+      </div>
+      <div class="form-input">
+        <label for="message-input">Message</label>
+        <input id="message-input" type="text" />
+        <div id="message-error"></div>
+      </div>
+
+      <button type="submit" id="submit-btn">Send message</button>
+    </form>
+
+    <script>  
+      window.ContactState = window.ContactState || {};
+      ContactState.q = ContactState.q || [];
+      function csconfig(){ContactState.q.push(arguments)};
+      csconfig('init', {landing_page_id: 'YOUR_LANDING_PAGE_ID'});
+    </script>
+    <script async src="https://js.contactstate.com/contactstate-latest.js"></script>
+
+    <script>
+      $(document).ready(function() {
+        // Get the form
+        var form = $('#demoForm');
+      
+        // Intercept the form submit action
+        form.on('submit', function(e) {
+      
+          // Stop the normal form submit
+          e.preventDefault();
+      
+          // Clear the errors
+          resetForm();
+      
+          // Loading indicator...
+          $('#submit-btn').text('Sending...');
+        
+          // Call the Contact State library.
+          // This will issue an API request to create and deliver the lead.
+          ContactState.Connect.create({
+            api_key: 'YOUR_FRONTEND_API_KEY_HERE',
+            // Toggle the certify flag to true to generate a certificate for this request.
+            certify: true,
+            fields: {
+              contact_state_connect_code: 'YOUR_CONNECT_CODE',
+              first_name: $('#first_name-input').val(),
+              last_name: $('#last_name-input').val(),
+              email: $('#email-input').val(),
+              home_phone: $('#home_phone-input').val(),
+              message: $('#message-input').val(),
+            }
+          }).then(function(response) {
+            console.log('Contact State connect_id: ' + response['id'])
+      
+            // If the deliveries array is empty (ie no delivery attempted)
+            // or successfully delivered, then submit the form as normal.
+            if(response['deliveries'][0].length === 0 || response['deliveries'][0]['status'] === 'delivered') {
+              // Add the connect_id to the form
+              $('<input>').attr({
+                type: 'hidden',
+                id: 'connect_id',
+                name: 'connect_id',
+                value: response['id']
+              }).appendTo(form);
+      
+              // Submit the form as normal
+              document.createElement('form').submit.call(form[0])
+            } else {
+              // If we get here it means the firewall has kicked in or the delivery has failed 
+              // We can extract the message and display it on the form.
+              var message = response['deliveries'][0]['message'];
+              // Display the delivery failure message on the form
+              $('#base-errors').html(message);
+      
+              // Reset the submit button
+              $('#submit-btn').text('Send message');
+            }
+          }).catch(function(errors) {
+            // Reset the submit button
+            $('#submit-btn').text('Send message');
+      
+            displayErrors(errors);
+          });
+        });
+      
+        function resetForm() {
+          $('#base-errors').html('');
+          $('#first_name-error').html('');
+          $('#last_name-error').html('');
+          $('#email-error').html('');
+          $('#home_phone-error').html('');
+          $('#message-error').html('');
+          $('#submit-btn').text('Send message');
+        }
+      
+        function displayErrors(errors) {
+          var error_list = '';
+      
+          errors.forEach(function(error) {
+            var field = '#' + error['param'] + '-error';
+            // If there's a field for the error message update it...
+            if($(field).length > 0) {
+              $(field).html(error['message']);
+            } else {
+              // Otherwise add it to the errors list at the top of the page
+              if(error['param']) {
+                error_list += '<li>' + error['param'] + ' - ' + error['message'] + '</li>';
+                $('#base-errors').html('<ul>' + error_list + '</ul>');
+              }
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
