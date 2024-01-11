@@ -1,0 +1,57 @@
+<html>
+  <head><title>Booking example</title></head>
+<body>
+
+  <form id="testForm" method="POST" action="thanks.html">
+    <input id="submit_btn" type="submit" />
+  </form>
+
+  <!-- element where the calendar will go -->
+  <div id="my-cal-inline"></div>
+
+  <script async src="https://js.contactstate.com/contactstate-latest.js"></script>
+  <script>  
+    window.ContactState = window.ContactState || {};
+    ContactState.q = ContactState.q || [];
+    function csconfig(){ContactState.q.push(arguments)};
+    csconfig('init', {landing_page_id: '88c1321d-2f66-4cd9-ab3a-95c7501cf245'});
+
+    window.addEventListener("load", function() {
+      document.getElementById('testForm').addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        ContactState.Connect.create({
+          api_key: 'P24Ws5ttfdKIJ0KWweCbh6OugXnChHdX',
+          certify: true,
+          fields: {
+            contact_state_connect_code: 'AHBHOGEMLV',
+            first_name: 'John',
+            last_name: 'Smith',
+            email: 'john.smith@example.com'
+          }
+        }).then(function(response) {
+          if(response['deliveries'][0].length === 0 || 
+            response['deliveries'][0]['status'] === 'delivered' ||
+            response['deliveries'][0]['status'] === 'pending') {
+
+            // Append connect id to the form
+            var myform = document.getElementById('testForm');
+            var form = new FormData(myform);
+            form.append("connect_id", response['id']);
+
+            ContactState.Connect.bookings({ 
+              embed_id: response['deliveries'][0]['booking']['embed_id'], // Embed id points to a calendar.
+              embed_type: 'inline',                                       // Render on the page
+              embed_element_id: 'my-cal-inline' ,                         // within this element.
+              delivery_id: response['deliveries'][0]['id']                // Associate with the delivery id to pre-populate the form elements and deliver post appointment booking submit
+            });
+          }
+        }).catch(function(errors) {
+          console.log(errors);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
+
