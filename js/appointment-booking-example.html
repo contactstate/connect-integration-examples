@@ -30,15 +30,11 @@
             email: 'john.smith@example.com'
           }
         }).then(function(response) {
-          if(response['deliveries'][0].length === 0 || 
-            response['deliveries'][0]['status'] === 'delivered' ||
-            response['deliveries'][0]['status'] === 'pending') {
+          if(response['deliveries'].length > 0 &&
+            (response['deliveries'][0]['status'] === 'delivered' ||
+            response['deliveries'][0]['status'] === 'pending')) {
 
-            // Append connect id to the form
-            var myform = document.getElementById('testForm');
-            var form = new FormData(myform);
-            form.append("connect_id", response['id']);
-
+            // Display the booking widget
             ContactState.Connect.bookings({ 
               embed_id: response['deliveries'][0]['booking']['embed_id'], // Embed id points to a calendar.
               embed_type: 'inline',                                       // Render on the page
